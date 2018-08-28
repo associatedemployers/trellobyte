@@ -22,6 +22,7 @@ module.exports = async function (req, res) {
   const { body } = req;
 
   console.log('body is', body.action);
+  console.log('body stringify', JSON.stringify(body));
 
   if (!actions[body.action.type]) {
     return res.status(204).end();
