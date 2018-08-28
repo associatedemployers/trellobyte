@@ -21,11 +21,12 @@ module.exports = async function (req, res) {
 
   const { body } = req;
 
+  console.log('body is', body.action);
+
   if (!actions[body.action.type]) {
     return res.status(204).end();
   }
 
-  console.log('body is', body.action);
   let mappingResult = await actions[body.action.type](body);
 
   res.status(200).send(mappingResult);
