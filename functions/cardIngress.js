@@ -7,10 +7,13 @@ const HIGH_PRIORITY_BOARD = '5b84634aded3440c680a9848';
 
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
+      Promise = require('bluebird'),
       descToEmail = require('../lib/description-to-email');
 
 const actions = {
   async emailCard (data) {
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
     let card = await trelloApi.card.search(data.action.data.card.id);
     card.isHighPriority = card.labels && card.labels.find(l => l.name === 'high-priority');
 
