@@ -15,7 +15,9 @@ const actions = {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     let card = await trelloApi.card.search(data.action.data.card.id);
+    console.log(card);
     card.isHighPriority = card.labels && card.labels.find(l => l.name === 'high-priority');
+    console.log(card);
 
     const email = descToEmail(card.desc);
 
