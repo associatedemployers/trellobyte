@@ -3,13 +3,35 @@ const {
   TRELLO_USER_SECRET
 } = process.env;
 
+const HIGH_PRIORITY_BOARD = '5b84634aded3440c680a9848';
+
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
-      mailer = require('../lib/mail');
+      mailer = require('../lib/mail'),
+      descToEmail = require('../lib/description-to-email');
 
 const actions = {
-  async createCard (data) {
+  async emailCard (data) {
     let card = await trelloApi.card.search(data.action.data.card.id);
-    console.log(card);
+    card.isHighPriority = card.labels && card.labels.find(l => l.name === 'high-priority');
+
+    const email = descToEmail(card.desc);
+
+    if (email) {
+      await mailer.send('new-card-followup', {
+        to: email,
+        subject: 'Your issue has been received',
+        data: { card }
+      });
+    }
+
+    // If it's high-priority, move it there.
+    if (card.isHighPriority) {
+      await trelloApi.card.update(card.id, {
+        idBoard: HIGH_PRIORITY_BOARD
+      });
+    }
+
+    return {};
   }
 };
 

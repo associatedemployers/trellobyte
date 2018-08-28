@@ -17,7 +17,10 @@
                         <td>
                           <center>
                             <h3 class="center spaced">Roger That</h3>
-                            <h5 class="center spaced">Your issue "{{action.data.card.name}}" has been received and will be triaged shortly.</h5>
+                            <h5 class="center spaced">Your issue "{{card.name}}" has been received and will be triaged shortly.</h5>
+                            {{#if card.isHighPriority}}
+                              <h6 class="center spaced">This issue is marked as <strong>HIGH PRIORITY</strong>.</h6>
+                            {{/if}}
                           </center>
                         </td>
                         <td class="expander"></td>
