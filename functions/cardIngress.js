@@ -3,7 +3,9 @@ const {
   TRELLO_USER_SECRET
 } = process.env;
 
-const HIGH_PRIORITY_BOARD = '5b8465f9501da987a5c88196';
+const HIGH_PRIORITY_LIST = '5b8465f9501da987a5c88196',
+      IN_PROGRESS_LIST = '5b84635bc6d06155ee1d4a1f',
+      COMPLETED_LIST = '5b846360b1ffb31656b5b521';
 
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
@@ -24,7 +26,7 @@ const actions = {
     if (email) {
       await mailer.send('new-card-followup', {
         to: email,
-        subject: 'Your issue has been received',
+        subject: `Your issue (#${card.shortLink}) has been received`,
         data: { card }
       });
     }
@@ -32,11 +34,30 @@ const actions = {
     // If it's high-priority, move it there.
     if (card.isHighPriority) {
       await trelloApi.card.update(card.id, {
-        idList: HIGH_PRIORITY_BOARD
+        idList: HIGH_PRIORITY_LIST
       });
     }
 
     return {};
+  },
+
+  async updateCard (data) {
+    let card = await trelloApi.card.search(data.action.data.card.id),
+        actionData = data.action.data || {};
+
+    const email = descToEmail(card.desc),
+          { listAfter, listBefore } = actionData,
+          listChanged = listAfter !== listBefore,
+          updateType = listAfter === IN_PROGRESS_LIST ? 'in progress' : listAfter === COMPLETED_LIST ? 'completed' : null;
+
+    // was moved to in progress or completed
+    if (listChanged && updateType) {
+      await mailer.send('card-update', {
+        to: email,
+        subject: `Your issue (#${card.shortLink}) was marked as ${updateType}`,
+        data: { card, updateType }
+      });
+    }
   }
 };
 
