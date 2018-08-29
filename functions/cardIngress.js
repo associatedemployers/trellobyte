@@ -47,8 +47,12 @@ const actions = {
 
     const email = descToEmail(card.desc),
           { listAfter, listBefore } = actionData,
-          listChanged = listAfter !== listBefore,
-          updateType = listAfter === IN_PROGRESS_LIST ? 'in progress' : listAfter === COMPLETED_LIST ? 'completed' : null;
+          listChanged = listAfter.id !== listBefore.id,
+          updateType = listAfter.id === IN_PROGRESS_LIST ? 'in progress' : listAfter.id === COMPLETED_LIST ? 'completed' : null;
+
+    console.log('listBefore', listBefore);
+    console.log('listAfter', listAfter);
+    console.log('updateType', updateType);
 
     // was moved to in progress or completed
     if (listChanged && updateType) {
@@ -58,6 +62,8 @@ const actions = {
         data: { card, updateType }
       });
     }
+
+    return {};
   }
 };
 
