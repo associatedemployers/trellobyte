@@ -3,7 +3,7 @@ const {
   TRELLO_USER_SECRET
 } = process.env;
 
-const HIGH_PRIORITY_BOARD = '5b84634aded3440c680a9848';
+const HIGH_PRIORITY_BOARD = '5b8465f9501da987a5c88196';
 
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
@@ -32,7 +32,7 @@ const actions = {
     // If it's high-priority, move it there.
     if (card.isHighPriority) {
       await trelloApi.card.update(card.id, {
-        idBoard: HIGH_PRIORITY_BOARD
+        idList: HIGH_PRIORITY_BOARD
       });
     }
 
