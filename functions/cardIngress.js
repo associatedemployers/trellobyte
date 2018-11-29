@@ -8,6 +8,7 @@ const HIGH_PRIORITY_LIST = '5b8465f9501da987a5c88196',
       COMPLETED_LIST = '5b846360b1ffb31656b5b521';
 
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
+      altTrelloApi = new require('trello')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
       Promise = require('bluebird'),
       moment = require('moment'),
@@ -33,13 +34,9 @@ const combineDupe = async (card) => {
   // delete the new card
   await trelloApi.card.del(card.id);
 
-  // update description on original
-  await trelloApi.card.update(original.id, {
-    desc: `Update on ${moment().format('M/D/YY h:mma')}:
-      ${card.desc.split('### If replying').shift().replace(/From:(?:\n|\t|\r|.)+Subject:.*/i, '')}
-      ----------------END OF UPDATE---------------
-      ${original.desc}`
-  });
+  // add comment on original
+  await altTrelloApi.addCommentToCard(original.id, `Reply from creator on ${moment().format('M/D/YY h:mma')}: ${card.desc.split('### If replying').shift().replace(/From:(?:\n|\t|\r|.)+Subject:.*/i, '')}`);
+
 
   return true;
 };
@@ -86,12 +83,32 @@ const actions = {
           listChanged = (listAfter || {}).id !== (listBefore || {}).id,
           updateType = (listAfter || {}).id === IN_PROGRESS_LIST ? 'in progress' : (listAfter || {}).id === COMPLETED_LIST ? 'completed' : null;
 
+    let closingRemark;
+
+    if (updateType === 'completed') {
+      let comment = await altTrelloApi.makeRequest(
+        'get',
+        `/1/cards/${card.id}/actions`,
+        {
+          filter: 'commentCard',
+          limit: 1
+        }
+      );
+
+      if (comment && comment[0] && comment[0].data && (comment[0].data.text || '').indexOf('/cr') > -1) {
+        closingRemark = {
+          text: comment[0].data.text,
+          member: ((comment.memberCreator || {}).fullName || '').split(' ').shift()
+        };
+      }
+    }
+
     // was moved to in progress or completed
     if (listChanged && updateType) {
       await mailer.send('card-update', {
         to: email,
         subject: `Your issue (#${card.shortLink}) was marked as ${updateType}`,
-        data: { card, updateType }
+        data: { card, updateType, closingRemark, isClosed: updateType === 'completed' }
       });
     }
 

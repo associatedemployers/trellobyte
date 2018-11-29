@@ -20,8 +20,23 @@
                             {{#if comment}}
                               <h6 class="spaced"><strong>Reply{{#if commenter}} From {{commenter}}{{/if}}:</strong> "{{comment}}"</h6>
                             {{else}}
-                              <h3 class="center spaced">We're on it!</h3>
+                              <h3 class="center spaced">
+                                {{#if isClosed}}
+                                  Issue closed
+                                {{else}}
+                                  We're on it!
+                                {{/if}}
+                              </h3>
                               <h5 class="center spaced">Your issue "{{card.name}}" has been marked as <strong>{{updateType}}</strong>.</h5>
+                              {{#if closingRemark}}
+                                <h6 class="center spaced">
+                                  <strong>Closing remark
+                                  {{#if closingRemark.member}}
+                                    by {{closingRemark.member}}
+                                  {{/if}}:</strong>
+                                  {{closingRemark.text}}
+                                </h6>
+                              {{/if}}
                             {{/if}}
                           </center>
                         </td>
