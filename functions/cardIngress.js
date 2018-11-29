@@ -99,7 +99,7 @@ const actions = {
 
       if (comment && comment[0] && comment[0].data && (comment[0].data.text || '').indexOf('/cr') > -1) {
         closingRemark = {
-          text: comment[0].data.text,
+          text: comment[0].data.text.replace('/cr', ''),
           member: ((comment.memberCreator || {}).fullName || '').split(' ').shift()
         };
       }
