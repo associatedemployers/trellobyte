@@ -8,11 +8,14 @@ const HIGH_PRIORITY_LIST = '5b8465f9501da987a5c88196',
       COMPLETED_LIST = '5b846360b1ffb31656b5b521';
 
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
-      altTrelloApi = new require('trello')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
+      Trello = require('trello'),
+      altTrelloApi = new Trello(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
       Promise = require('bluebird'),
       moment = require('moment'),
       descToEmail = require('../lib/description-to-email');
+
+console.log(altTrelloApi);
 
 const combineDupe = async (card) => {
   if (!card.desc || card.desc.indexOf('~cid: ') < 0) {
@@ -36,7 +39,6 @@ const combineDupe = async (card) => {
 
   // add comment on original
   await altTrelloApi.addCommentToCard(original.id, `Reply from creator on ${moment().format('M/D/YY h:mma')}: ${card.desc.split('### If replying').shift().replace(/From:(?:\n|\t|\r|.)+Subject:.*/i, '')}`);
-
 
   return true;
 };
