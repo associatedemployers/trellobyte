@@ -1,3 +1,4 @@
+### If replying, enter above this line (~cid: {{card.id}}) ###
 <table class="body">
   <tr>
     <td class="center" align="center" valign="top">
@@ -16,10 +17,14 @@
                       <tr>
                         <td>
                           <center>
-                            <h3 class="center spaced">Roger That</h3>
-                            <h5 class="center spaced">Your issue "{{card.name}}" has been received and will be triaged shortly.</h5>
-                            {{#if card.isHighPriority}}
-                              <h6 class="center spaced">This issue is marked as <strong>HIGH PRIORITY</strong>.</h6>
+                            {{#if comment}}
+                              <h5 class="spaced"><strong>Reply{{#if commenter}} From {{commenter}}{{/if}}:</strong> "{{comment}}"</h5>
+                            {{else}}
+                              <h3 class="center spaced">Roger That</h3>
+                              <h5 class="center spaced">Your issue "{{card.name}}" has been received and will be triaged shortly.</h5>
+                              {{#if card.isHighPriority}}
+                                <h6 class="center spaced">This issue is marked as <strong>HIGH PRIORITY</strong>.</h6>
+                              {{/if}}
                             {{/if}}
                           </center>
                         </td>

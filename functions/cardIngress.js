@@ -10,16 +10,52 @@ const HIGH_PRIORITY_LIST = '5b8465f9501da987a5c88196',
 const trelloApi = require('trello-node-api')(TRELLO_DEV_SECRET, TRELLO_USER_SECRET),
       mailer = require('../lib/mail'),
       Promise = require('bluebird'),
+      moment = require('moment'),
       descToEmail = require('../lib/description-to-email');
+
+const combineDupe = async (card) => {
+  if (!card.desc || card.desc.indexOf('~cid: ') < 0) {
+    return;
+  }
+
+  let cid = (/###.*~cid: ([\d\w]*)/gi.exec(card.desc) || [])[1];
+
+  if (!cid) {
+    return;
+  }
+
+  let original = await trelloApi.card.search(cid);
+
+  if (!original) {
+    return;
+  }
+
+  // delete the new card
+  await trelloApi.card.del(card.id);
+
+  // update description on original
+  await trelloApi.card.update(original.id, {
+    desc: `Update on ${moment().format('M/D/YY h:mma')}:
+      ${card.desc.split('### If replying').shift().replace(/From:(?:\n|\t|\r|.)+Subject:.*/i, '')}
+      ----------------END OF UPDATE---------------
+      ${original.desc}`
+  });
+
+  return true;
+};
 
 const actions = {
   async emailCard (data) {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    let card = await trelloApi.card.search(data.action.data.card.id);
-    console.log(card);
+    let card = await trelloApi.card.search(data.action.data.card.id),
+        dupe = await combineDupe(card);
+
+    if (dupe) {
+      return {};
+    }
+
     card.isHighPriority = card.labels && card.labels.find(l => l.name === 'high-priority');
-    console.log(card);
 
     const email = descToEmail(card.desc);
 
@@ -47,12 +83,8 @@ const actions = {
 
     const email = descToEmail(card.desc),
           { listAfter, listBefore } = actionData,
-          listChanged = listAfter.id !== listBefore.id,
-          updateType = listAfter.id === IN_PROGRESS_LIST ? 'in progress' : listAfter.id === COMPLETED_LIST ? 'completed' : null;
-
-    console.log('listBefore', listBefore);
-    console.log('listAfter', listAfter);
-    console.log('updateType', updateType);
+          listChanged = (listAfter || {}).id !== (listBefore || {}).id,
+          updateType = (listAfter || {}).id === IN_PROGRESS_LIST ? 'in progress' : (listAfter || {}).id === COMPLETED_LIST ? 'completed' : null;
 
     // was moved to in progress or completed
     if (listChanged && updateType) {
@@ -60,6 +92,26 @@ const actions = {
         to: email,
         subject: `Your issue (#${card.shortLink}) was marked as ${updateType}`,
         data: { card, updateType }
+      });
+    }
+
+    return {};
+  },
+
+  async commentCard (data) {
+    let card = await trelloApi.card.search(data.action.data.card.id),
+        actionData = data.action.data || {};
+
+    const email = descToEmail(card.desc),
+          { text } = actionData,
+          commenter = (((data.action || {}).memberCreator || {}).fullName || '').split(' ').shift();
+
+    // reply enabled for comment
+    if (text && text.indexOf('/r') > -1) {
+      await mailer.send('card-update', {
+        to: email,
+        subject: `A new reply to your issue (#${card.shortLink})${commenter ? ' from ' + commenter : ''}`,
+        data: { card, comment: text.replace('/r', ''), commenter }
       });
     }
 
