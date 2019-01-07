@@ -38,7 +38,7 @@ const combineDupe = async (card) => {
   await trelloApi.card.del(card.id);
 
   // add comment on original
-  await altTrelloApi.addCommentToCard(original.id, `Reply from creator on ${moment().format('M/D/YY h:mma')}: ${card.desc.split('### If replying').shift().replace(/From:(?:\n|\t|\r|.)+Subject:.*/i, '')}`);
+  await altTrelloApi.addCommentToCard(original.id, `Reply from creator on ${moment().format('M/D/YY h:mma')}: ${card.desc.split('### If replying').shift()}`);
 
   return true;
 };
